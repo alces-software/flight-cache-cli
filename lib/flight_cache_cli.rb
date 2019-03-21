@@ -37,8 +37,8 @@ class FlightCacheCli
   extend Commander::Delegates
 
   program :name,        'flight-cache'
-  program :version,     '0.0.0'
-  program :description, 'TBD'
+  program :version,     '0.3.0'
+  program :description, 'Manages the flight file cache'
   program :help_paging, false
 
   silent_trace!
@@ -62,7 +62,7 @@ class FlightCacheCli
     c.syntax = 'download ID'
     c.description = 'Download the blob by id'
     act(c) do |id|
-      print client.download(id)
+      print client.blobs.download(id: id).read
     end
   end
 
@@ -70,7 +70,7 @@ class FlightCacheCli
     c.syntax = 'blob ID'
     c.description = 'Get the metadata about a particular blob'
     act(c) do |id|
-      pp client.get(id).to_h
+      pp client.blobs.get(id: id).to_h
     end
   end
 
@@ -78,7 +78,7 @@ class FlightCacheCli
     c.syntax = 'tag:blobs TAG'
     c.description = "Get all the user blobs' meteadata for a particular tag"
     act(c) do |tag|
-      pp client.list(tag: tag).map(&:to_h)
+      pp client.blobs.list(tag: tag).map(&:to_h)
     end
   end
 
@@ -86,9 +86,10 @@ class FlightCacheCli
     c.syntax = 'upload CONTAINER_ID FILEPATH'
     c.description = 'Upload the file to the container'
     act(c) do |id, filepath|
-      io = File.open(filepath, 'r')
-      name = File.basename(filepath)
-      pp client.upload(id, name, io).to_h
+      pp client.blobs.uploader(
+        filename: File.basename(filepath),
+        io:       File.open(filepath, 'r')
+      ).to_container(id: id).to_h
     end
   end
 end
