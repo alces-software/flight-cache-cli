@@ -62,7 +62,7 @@ class FlightCacheCli
     c.syntax = 'download ID'
     c.description = 'Download the blob by id'
     act(c) do |id|
-      print client.blobs.download(id: id)
+      print client.blobs.download(id: id).read
     end
   end
 

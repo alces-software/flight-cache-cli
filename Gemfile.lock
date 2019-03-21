@@ -7,9 +7,9 @@ GIT
 
 GIT
   remote: https://github.com/alces-software/flight_cache
-  revision: 707dd645fd3044c0375e3f5829ae2388f255b27c
+  revision: 6f6496721f0bafe09308084129be4f58348bd4d8
   specs:
-    flight_cache (0.4.0)
+    flight_cache (0.4.1)
       activesupport
       faraday
       faraday_middleware
