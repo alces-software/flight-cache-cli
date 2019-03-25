@@ -49,8 +49,12 @@ class FlightCacheCli
 
   def self.act(command)
     command.action do |args, opts|
-      yield(*args, opts.to_h)
+      yield(*args, opts.__hash__)
     end
+  end
+
+  def self.scope_option(command)
+    command.option '-s', '--scope SCOPE', 'Specify the tagged scope'
   end
 
   def self.cache
@@ -66,8 +70,9 @@ class FlightCacheCli
   command :'list blobs' do |c|
     c.syntax = 'list blobs TAG'
     c.description = 'Retrieve all the blobs according to their TAG'
-    act(c) do |tag|
-      pp cache.blobs(tag).map(&:to_h)
+    scope_option(c)
+    act(c) do |tag, scope: nil|
+      pp cache.blobs(tag, scope: scope).map(&:to_h)
     end
   end
 
@@ -96,10 +101,11 @@ class FlightCacheCli
   command :upload do |c|
     c.syntax = 'upload TAG FILEPATH'
     c.description = 'Upload the file to the TAG'
-    act(c) do |tag, filepath|
+    scope_option(c)
+    act(c) do |tag, filepath, scope: nil|
       filename = File.basename(filepath),
       io = File.open(filepath, 'r')
-      pp cache.upload(filename, io, tag: tag).to_h
+      pp cache.upload(filename, io, tag: tag, scope: scope).to_h
     end
   end
 end
