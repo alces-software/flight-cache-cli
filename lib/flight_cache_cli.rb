@@ -94,13 +94,12 @@ class FlightCacheCli
   end
 
   command :upload do |c|
-    c.syntax = 'upload CONTAINER_ID FILEPATH'
-    c.description = 'Upload the file to the container'
-    act(c) do |id, filepath|
-      pp cache.client.blobs.uploader(
-        filename: File.basename(filepath),
-        io:       File.open(filepath, 'r')
-      ).to_container(id: id).to_h
+    c.syntax = 'upload TAG FILEPATH'
+    c.description = 'Upload the file to the TAG'
+    act(c) do |tag, filepath|
+      filename = File.basename(filepath),
+      io = File.open(filepath, 'r')
+      pp cache.upload(filename, io, tag: tag).to_h
     end
   end
 end
