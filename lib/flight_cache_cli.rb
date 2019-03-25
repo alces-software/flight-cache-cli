@@ -57,6 +57,26 @@ class FlightCacheCli
     FlightCache.new(ENV['FLIGHT_CACHE_HOST'], ENV['FLIGHT_SSO_TOKEN'])
   end
 
+  command :list do |c|
+    c.syntax = 'list'
+    c.description = 'Retrieve and filter multiple blobs or tags'
+    c.sub_command_group = true
+  end
+
+  command :'list blobs' do |c|
+    c.syntax = 'list blobs TAG'
+    c.description = 'Retrieve all the blobs according to their TAG'
+    act(c) do |tag|
+      pp cache.blobs(tag).map(&:to_h)
+    end
+  end
+
+  command :'list tags' do |c|
+    c.syntax = 'list tags'
+    c.description = 'Retrieve all the tags'
+    act(c) { pp cache.tags.map(&:to_h) }
+  end
+
   command :download do |c|
     c.syntax = 'download ID'
     c.description = 'Download the blob by id'
@@ -70,14 +90,6 @@ class FlightCacheCli
     c.description = 'Get the metadata about a particular blob'
     act(c) do |id|
       pp cache.blob(id).to_h
-    end
-  end
-
-  command :'tag:blobs' do |c|
-    c.syntax = 'tag:blobs TAG'
-    c.description = "Get all the user blobs' meteadata for a particular tag"
-    act(c) do |tag|
-      pp cache.blobs(tag).map(&:to_h)
     end
   end
 
