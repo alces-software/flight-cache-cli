@@ -85,8 +85,8 @@ class FlightCacheCli
     end
   end
 
-  command :blob do |c|
-    c.syntax = 'blob ID'
+  command :get do |c|
+    c.syntax = 'get ID'
     c.description = 'Get the metadata about a particular blob'
     act(c) do |id|
       pp cache.blob(id).to_h
