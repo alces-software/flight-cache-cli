@@ -27,8 +27,7 @@
 
 require 'commander'
 
-require 'flight_cache/client'
-require 'flight_cache/models'
+require 'flight_cache'
 require 'pp'
 
 class FlightCacheCli
@@ -54,15 +53,15 @@ class FlightCacheCli
     end
   end
 
-  def self.client
-    FlightCache::Client.new(ENV['FLIGHT_CACHE_HOST'], ENV['FLIGHT_SSO_TOKEN'])
+  def self.cache
+    FlightCache.new(ENV['FLIGHT_CACHE_HOST'], ENV['FLIGHT_SSO_TOKEN'])
   end
 
   command :download do |c|
     c.syntax = 'download ID'
     c.description = 'Download the blob by id'
     act(c) do |id|
-      print client.blobs.download(id: id).read
+      print cache.download(id).read
     end
   end
 
@@ -70,7 +69,7 @@ class FlightCacheCli
     c.syntax = 'blob ID'
     c.description = 'Get the metadata about a particular blob'
     act(c) do |id|
-      pp client.blobs.get(id: id).to_h
+      pp cache.blob(id).to_h
     end
   end
 
@@ -78,7 +77,7 @@ class FlightCacheCli
     c.syntax = 'tag:blobs TAG'
     c.description = "Get all the user blobs' meteadata for a particular tag"
     act(c) do |tag|
-      pp client.blobs.list(tag: tag).map(&:to_h)
+      pp cache.blobs(tag).map(&:to_h)
     end
   end
 
@@ -86,7 +85,7 @@ class FlightCacheCli
     c.syntax = 'upload CONTAINER_ID FILEPATH'
     c.description = 'Upload the file to the container'
     act(c) do |id, filepath|
-      pp client.blobs.uploader(
+      pp cache.client.blobs.uploader(
         filename: File.basename(filepath),
         io:       File.open(filepath, 'r')
       ).to_container(id: id).to_h
