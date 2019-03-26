@@ -104,7 +104,7 @@ class FlightCacheCli
       path given by FILEPATH. This can either be an absolute or relative to
       the current working directory.
 
-      Alternatively the content can be wrote to standard out by setting the
+      Alternatively the content can be wrote to stdout by setting the
       FILEPATH to '-' (without quotes).
     DESC
     act(c) do |id, filename|
@@ -128,13 +128,17 @@ class FlightCacheCli
   end
 
   command :upload do |c|
-    c.syntax = 'upload TAG FILEPATH'
-    c.description = 'Upload the file to the TAG'
+    c.syntax = 'upload TAG FILENAME FILEPATH'
+    c.summary = 'Upload the file to the TAG'
+    c.description = <<~DESC.chomp
+      Uploads the file to the given tag. The FILENAME is used as a label on
+      the server. The FILEPATH gives the file to be uploaded. Content can be
+      uploaded from stdin by setting FILEPATH to '-' (without quotes).
+    DESC
     scope_option(c)
-    act(c) do |tag, filepath, scope: nil|
-      filename = File.basename(filepath),
-      io = File.open(filepath, 'r')
-      pp cache.upload(filename, io, tag: tag, scope: scope).to_h
+    act(c) do |tag, name, filepath, scope: nil|
+      io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
+      pp cache.upload(name, io, tag: tag, scope: scope).to_h
     end
   end
 end
