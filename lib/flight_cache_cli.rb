@@ -97,7 +97,7 @@ class FlightCacheCli
   end
 
   command :download do |c|
-    c.syntax = 'download ID FILEPATH'
+    c.syntax = 'download ID [FILEPATH]'
     c.summary = 'Download the blob by id'
     c.description = <<~DESC.chomp
       Downloads the given blob by its id. The file will be saved to the
@@ -105,16 +105,20 @@ class FlightCacheCli
       the current working directory.
 
       Alternatively the content can be wrote to stdout by setting the
-      FILEPATH to '-' (without quotes).
+      FILEPATH to '-' (without quotes). Finally, if the FILENAME is missing
+      it will download the file according to its name on the server.
     DESC
-    act(c) do |id, filename|
+    act(c) do |id, filename = nil, opts|
+      filename ||= cache.blob(id).filename
       io = cache.download(id)
       if filename == '-'
         print io.read
       elsif io.is_a?(Tempfile)
         FileUtils.mv io.path, filename
+        puts "Downloaded: #{File.expand_path(filename)}"
       else
         File.write(filename, io.read)
+        puts "Downloaded: #{File.expand_path(filename)}"
       end
     end
   end
