@@ -68,17 +68,28 @@ class FlightCacheCli
   end
 
   command :'list blobs' do |c|
-    c.syntax = 'list blobs TAG'
-    c.description = 'Retrieve all the blobs according to their TAG'
+    c.syntax = 'list blobs [TAG]'
+    c.summary = 'Retrieve and filter the blobs'
+    c.description = <<~DESC.chomp
+      By default this will return all the blobs you have access to. This
+      includes blobs in the user, group, and public ownership scopes of
+      any tag.
+
+      The TAG optional argument can be used to filter the blobs further by
+      their tag. The `--scope` option will limit the resaults to a specific
+      ownership scope
+    DESC
+    c.hidden = true
     scope_option(c)
-    act(c) do |tag, scope: nil|
-      pp cache.blobs(tag, scope: scope).map(&:to_h)
+    act(c) do |tag = nil, scope: nil|
+      pp cache.blobs(tag: tag, scope: scope).map(&:to_h)
     end
   end
 
   command :'list tags' do |c|
     c.syntax = 'list tags'
     c.description = 'Retrieve all the tags'
+    c.hidden = true
     act(c) { pp cache.tags.map(&:to_h) }
   end
 
