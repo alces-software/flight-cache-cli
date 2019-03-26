@@ -108,17 +108,24 @@ class FlightCacheCli
       FILEPATH to '-' (without quotes). Finally, if the FILENAME is missing
       it will download the file according to its name on the server.
     DESC
+    c.option '-f', '--force', 'Overwrite any existing files'
     act(c) do |id, filename = nil, opts|
       filename ||= cache.blob(id).filename
+      path = File.expand_path(filename)
+      if opts[:force] && File.exists?(path)
+        $stderr.puts "Overwriting existing file..."
+      elsif File.exists?(path)
+        raise ExistingFileError, "The file already exists: #{path}"
+      end
       io = cache.download(id)
       if filename == '-'
         print io.read
       elsif io.is_a?(Tempfile)
-        FileUtils.mv io.path, filename
-        puts "Downloaded: #{File.expand_path(filename)}"
+        FileUtils.mv io.path, path
+        puts "Downloaded: #{path}"
       else
-        File.write(filename, io.read)
-        puts "Downloaded: #{File.expand_path(filename)}"
+        File.write(path, io.read)
+        puts "Downloaded: #{path}"
       end
     end
   end
