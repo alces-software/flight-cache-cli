@@ -30,6 +30,7 @@ require 'commander'
 require 'flight_cache'
 require 'pp'
 
+require 'flight_cache_cli/config'
 require 'flight_cache_cli/account_config'
 
 class FlightCacheCli
@@ -60,7 +61,7 @@ class FlightCacheCli
   end
 
   def self.cache
-    FlightCache.new(ENV['FLIGHT_CACHE_HOST'], AccountConfig.read.auth_token)
+    FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
   end
 
   command :list do |c|

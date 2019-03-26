@@ -1,0 +1,15 @@
+# =============================================================================
+# GETTING STARTED
+# Please COPY this file into place, please leave this example as a reference.
+#
+# cp etc/config.yaml.example etc/config.yaml
+# =============================================================================
+
+# =============================================================================
+# Host URL
+# By default, the app will automatically communicate with the global cache
+# server. To configure it to use a different address, please set the following.
+# Alternatively, FLIGHT_CACHE_HOST can be exported to your environment
+# =============================================================================
+# host:
+

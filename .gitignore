@@ -1,0 +1,2 @@
+etc/config.*
+!etc/config.yaml.example
