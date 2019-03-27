@@ -31,6 +31,7 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
 gem 'commander',    github: 'alces-software/commander'
 gem 'flight_cache', github: 'alces-software/flight_cache'
+gem 'flight_config', github: 'alces-software/flight_config'
 
 group :development do
   gem 'pry'

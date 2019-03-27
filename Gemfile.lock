@@ -7,13 +7,21 @@ GIT
 
 GIT
   remote: https://github.com/alces-software/flight_cache
-  revision: 8c2109b22f8f391f46e6e33c0de70a0b39d32819
+  revision: 2e97c13c3060244425c359319e2529f85db87e1b
   specs:
-    flight_cache (0.5.0)
+    flight_cache (0.5.3)
       activesupport
       faraday
       faraday_middleware
       hashie
+
+GIT
+  remote: https://github.com/alces-software/flight_config
+  revision: 0a0137d42fd5d6122e56b827c400bafa93b82520
+  specs:
+    flight_config (0.1.0)
+      fakefs
+      tty-config
 
 GEM
   remote: https://rubygems.org/
@@ -26,6 +34,7 @@ GEM
     byebug (11.0.0)
     coderay (1.1.2)
     concurrent-ruby (1.1.5)
+    fakefs (0.20.0)
     faraday (0.15.4)
       multipart-post (>= 1.2, < 3)
     faraday_middleware (0.13.1)
@@ -44,6 +53,7 @@ GEM
       byebug (~> 11.0)
       pry (~> 0.10)
     thread_safe (0.3.6)
+    tty-config (0.3.1)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
 
@@ -53,6 +63,7 @@ PLATFORMS
 DEPENDENCIES
   commander!
   flight_cache!
+  flight_config!
   pry
   pry-byebug
 

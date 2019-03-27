@@ -27,9 +27,11 @@
 
 require 'commander'
 
-require 'flight_cache/client'
-require 'flight_cache/models'
+require 'flight_cache'
 require 'pp'
+
+require 'flight_cache_cli/config'
+require 'flight_cache_cli/account_config'
 
 class FlightCacheCli
   extend Commander::UI
@@ -50,46 +52,104 @@ class FlightCacheCli
 
   def self.act(command)
     command.action do |args, opts|
-      yield(*args, opts.to_h)
+      yield(*args, opts.__hash__)
     end
   end
 
-  def self.client
-    FlightCache::Client.new(ENV['FLIGHT_CACHE_HOST'], ENV['FLIGHT_SSO_TOKEN'])
+  def self.scope_option(command)
+    command.option '-s', '--scope SCOPE', 'Specify the tagged scope'
+  end
+
+  def self.cache
+    FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
+  end
+
+  command :list do |c|
+    c.syntax = 'list'
+    c.description = 'Retrieve and filter multiple blobs or tags'
+    c.sub_command_group = true
+  end
+
+  command :'list blobs' do |c|
+    c.syntax = 'list blobs [TAG]'
+    c.summary = 'Retrieve and filter the blobs'
+    c.description = <<~DESC.chomp
+      By default this will return all the blobs you have access to. This
+      includes blobs in the user, group, and public ownership scopes of
+      any tag.
+
+      The TAG optional argument can be used to filter the blobs further by
+      their tag. The `--scope` option will limit the resaults to a specific
+      ownership scope
+    DESC
+    c.hidden = true
+    scope_option(c)
+    act(c) do |tag = nil, scope: nil|
+      pp cache.blobs(tag: tag, scope: scope).map(&:to_h)
+    end
+  end
+
+  command :'list tags' do |c|
+    c.syntax = 'list tags'
+    c.description = 'Retrieve all the tags'
+    c.hidden = true
+    act(c) { pp cache.tags.map(&:to_h) }
   end
 
   command :download do |c|
-    c.syntax = 'download ID'
-    c.description = 'Download the blob by id'
-    act(c) do |id|
-      print client.blobs.download(id: id).read
+    c.syntax = 'download ID [FILEPATH]'
+    c.summary = 'Download the blob by id'
+    c.description = <<~DESC.chomp
+      Downloads the given blob by its id. The file will be saved to the
+      path given by FILEPATH. This can either be an absolute or relative to
+      the current working directory.
+
+      Alternatively the content can be wrote to stdout by setting the
+      FILEPATH to '-' (without quotes). Finally, if the FILENAME is missing
+      it will download the file according to its name on the server.
+    DESC
+    c.option '-f', '--force', 'Overwrite any existing files'
+    act(c) do |id, filename = nil, opts|
+      filename ||= cache.blob(id).filename
+      path = File.expand_path(filename)
+      if opts[:force] && File.exists?(path)
+        $stderr.puts "Overwriting existing file..."
+      elsif File.exists?(path)
+        raise ExistingFileError, "The file already exists: #{path}"
+      end
+      io = cache.download(id)
+      if filename == '-'
+        print io.read
+      elsif io.is_a?(Tempfile)
+        FileUtils.mv io.path, path
+        puts "Downloaded: #{path}"
+      else
+        File.write(path, io.read)
+        puts "Downloaded: #{path}"
+      end
     end
   end
 
-  command :blob do |c|
-    c.syntax = 'blob ID'
+  command :get do |c|
+    c.syntax = 'get ID'
     c.description = 'Get the metadata about a particular blob'
     act(c) do |id|
-      pp client.blobs.get(id: id).to_h
-    end
-  end
-
-  command :'tag:blobs' do |c|
-    c.syntax = 'tag:blobs TAG'
-    c.description = "Get all the user blobs' meteadata for a particular tag"
-    act(c) do |tag|
-      pp client.blobs.list(tag: tag).map(&:to_h)
+      pp cache.blob(id).to_h
     end
   end
 
   command :upload do |c|
-    c.syntax = 'upload CONTAINER_ID FILEPATH'
-    c.description = 'Upload the file to the container'
-    act(c) do |id, filepath|
-      pp client.blobs.uploader(
-        filename: File.basename(filepath),
-        io:       File.open(filepath, 'r')
-      ).to_container(id: id).to_h
+    c.syntax = 'upload TAG FILENAME FILEPATH'
+    c.summary = 'Upload the file to the TAG'
+    c.description = <<~DESC.chomp
+      Uploads the file to the given tag. The FILENAME is used as a label on
+      the server. The FILEPATH gives the file to be uploaded. Content can be
+      uploaded from stdin by setting FILEPATH to '-' (without quotes).
+    DESC
+    scope_option(c)
+    act(c) do |tag, name, filepath, scope: nil|
+      io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
+      pp cache.upload(name, io, tag: tag, scope: scope).to_h
     end
   end
 end
