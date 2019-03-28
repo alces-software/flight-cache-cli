@@ -7,9 +7,9 @@ GIT
 
 GIT
   remote: https://github.com/alces-software/flight_cache
-  revision: 2e97c13c3060244425c359319e2529f85db87e1b
+  revision: 2ed0991a8caf45f9e79abf0430ad5163333090d9
   specs:
-    flight_cache (0.5.3)
+    flight_cache (0.5.4)
       activesupport
       faraday
       faraday_middleware
@@ -26,7 +26,7 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (5.2.2.1)
+    activesupport (5.2.3)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 0.7, < 2)
       minitest (~> 5.1)
