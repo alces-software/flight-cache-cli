@@ -39,7 +39,7 @@ class FlightCacheCli
   extend Commander::Delegates
 
   program :name,        'flight-cache'
-  program :version,     '0.4.0'
+  program :version,     '0.5.1'
   program :description, 'Manages the flight file cache'
   program :help_paging, false
 
@@ -135,6 +135,14 @@ class FlightCacheCli
     c.description = 'Get the metadata about a particular blob'
     act(c) do |id|
       pp cache.blob(id).to_h
+    end
+  end
+
+  command :delete do |c|
+    c.syntax = 'delete ID'
+    c.summary = 'Destroys the given blob and returns it metadata'
+    act(c) do |id|
+      pp cache.delete(id).to_h
     end
   end
 
