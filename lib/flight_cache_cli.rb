@@ -39,7 +39,7 @@ class FlightCacheCli
   extend Commander::Delegates
 
   program :name,        'flight-cache'
-  program :version,     '0.4.0'
+  program :version,     '0.5.1'
   program :description, 'Manages the flight file cache'
   program :help_paging, false
 
