@@ -138,6 +138,14 @@ class FlightCacheCli
     end
   end
 
+  command :delete do |c|
+    c.syntax = 'delete ID'
+    c.summary = 'Destroys the given blob and returns it metadata'
+    act(c) do |id|
+      pp cache.delete(id).to_h
+    end
+  end
+
   command :upload do |c|
     c.syntax = 'upload TAG FILENAME FILEPATH'
     c.summary = 'Upload the file to the TAG'
