@@ -128,7 +128,8 @@ class FlightCacheCli
     c.syntax = 'delete ID'
     c.summary = 'Destroys the given blob and returns it metadata'
     act(c) do |id|
-      pp cache.delete(id).to_h
+      blob = cache.delete(id)
+      puts "File '#{blob.filename}' has been deleted"
     end
   end
 
@@ -143,7 +144,8 @@ class FlightCacheCli
     scope_option(c)
     act(c) do |tag, name, filepath, scope: nil|
       io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
-      pp cache.upload(name, io, tag: tag, scope: scope).to_h
+      blob = cache.upload(name, io, tag: tag, scope: scope)
+      puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
     end
   end
 end
