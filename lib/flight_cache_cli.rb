@@ -66,14 +66,8 @@ class FlightCacheCli
     FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
   end
 
-  command :list do |c|
-    c.syntax = 'list'
-    c.description = 'Retrieve and filter multiple blobs or tags'
-    c.sub_command_group = true
-  end
-
-  command :'list blobs' do |c|
-    c.syntax = 'list blobs [TAG]'
+  command :'list' do |c|
+    c.syntax = 'list [TAG]'
     c.summary = 'Retrieve and filter the blobs'
     c.description = <<~DESC.chomp
       By default this will return all the blobs you have access to. This
@@ -84,17 +78,15 @@ class FlightCacheCli
       their tag. The `--scope` option will limit the resaults to a specific
       ownership scope
     DESC
-    c.hidden = true
     scope_option(c)
     act(c) do |tag = nil, scope: nil|
       pp cache.blobs(tag: tag, scope: scope).map(&:to_h)
     end
   end
 
-  command :'list tags' do |c|
-    c.syntax = 'list tags'
+  command :'list-tags' do |c|
+    c.syntax = 'list-tags'
     c.description = 'Retrieve all the tags'
-    c.hidden = true
     act(c) { pp cache.tags.map(&:to_h) }
   end
 
@@ -129,14 +121,6 @@ class FlightCacheCli
         File.write(path, io.read)
         puts "Downloaded: #{path}"
       end
-    end
-  end
-
-  command :get do |c|
-    c.syntax = 'get ID'
-    c.description = 'Get the metadata about a particular blob'
-    act(c) do |id|
-      pp cache.blob(id).to_h
     end
   end
 
