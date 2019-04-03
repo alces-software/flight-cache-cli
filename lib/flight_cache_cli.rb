@@ -134,7 +134,7 @@ class FlightCacheCli
   end
 
   command :upload do |c|
-    c.syntax = 'upload TAG FILENAME FILEPATH'
+    c.syntax = 'upload TAG FILEPATH [FILENAME]'
     c.summary = 'Upload the file to the TAG'
     c.description = <<~DESC.chomp
       Uploads the file to the given tag. The FILENAME is used as a label on
@@ -142,9 +142,10 @@ class FlightCacheCli
       uploaded from stdin by setting FILEPATH to '-' (without quotes).
     DESC
     scope_option(c)
-    act(c) do |tag, name, filepath, scope: nil|
+    act(c) do |tag, filepath, name = nil, opts|
+      name ||= File.basename(filepath)
       io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
-      blob = cache.upload(name, io, tag: tag, scope: scope)
+      blob = cache.upload(name, io, tag: tag, scope: opts[:scope])
       puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
     end
   end
