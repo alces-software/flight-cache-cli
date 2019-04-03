@@ -68,13 +68,13 @@ class FlightCacheCli
 
   command :'list' do |c|
     c.syntax = 'list [TAG]'
-    c.summary = 'Retrieve and filter the blobs'
+    c.summary = 'Retrieve and filter the files'
     c.description = <<~DESC.chomp
-      By default this will return all the blobs you have access to. This
-      includes blobs in the user, group, and public ownership scopes of
+      By default this will return all the files you have access to. This
+      includes files in the user, group, and public ownership scopes of
       any tag.
 
-      The TAG optional argument can be used to filter the blobs further by
+      The TAG optional argument can be used to filter the files further by
       their tag. The `--scope` option will limit the resaults to a specific
       ownership scope
     DESC
@@ -92,9 +92,9 @@ class FlightCacheCli
 
   command :download do |c|
     c.syntax = 'download ID [FILEPATH]'
-    c.summary = 'Download the blob by id'
+    c.summary = 'Download the file by id'
     c.description = <<~DESC.chomp
-      Downloads the given blob by its id. The file will be saved to the
+      Downloads the given file by its id. The file will be saved to the
       path given by FILEPATH. This can either be an absolute or relative to
       the current working directory.
 
@@ -126,7 +126,7 @@ class FlightCacheCli
 
   command :delete do |c|
     c.syntax = 'delete ID'
-    c.summary = 'Destroys the given blob and returns it metadata'
+    c.summary = 'Destroys the given file and returns it metadata'
     act(c) do |id|
       blob = cache.delete(id)
       puts "File '#{blob.filename}' has been deleted"
