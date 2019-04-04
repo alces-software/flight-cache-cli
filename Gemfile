@@ -35,6 +35,8 @@ gem 'commander',    github: 'alces-software/commander'
 gem 'flight_cache', github: 'alces-software/flight_cache'
 gem 'flight_config', github: 'alces-software/flight_config'
 
+
+gem "filesize", "~> 0.2.0"
 gem 'tty-table'
 
 group :development do

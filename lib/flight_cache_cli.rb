@@ -36,6 +36,7 @@ require 'flight_cache_cli/config'
 require 'flight_cache_cli/account_config'
 
 require 'tty-table'
+require 'filesize'
 
 class FlightCacheCli
   extend Commander::UI
@@ -92,7 +93,7 @@ class FlightCacheCli
         cache.blobs(tag: tag, scope: opts[:scope]),
         'ID' => proc { |b| b.id },
         'Filename' => proc { |b| b.filename },
-        'Size' => proc { |b| b.size },
+        'Size' => proc { |b| Filesize.new(b.size).pretty },
         'Scope' => proc { |b| b.scope }
       )
     end
@@ -105,7 +106,7 @@ class FlightCacheCli
       puts render_table(
         cache.tags,
         'Name' => proc { |t| t.name },
-        'Max. Size' => proc { |t| t.max_size },
+        'Max. Size' => proc { |t| Filesize.new(t.max_size).pretty },
         'Restricted' => proc { |t| t.restricted }
       )
     end
