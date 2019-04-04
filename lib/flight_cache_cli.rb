@@ -35,6 +35,8 @@ require 'pp'
 require 'flight_cache_cli/config'
 require 'flight_cache_cli/account_config'
 
+require 'tty-table'
+
 class FlightCacheCli
   extend Commander::UI
   extend Commander::UI::AskForClass
@@ -80,7 +82,17 @@ class FlightCacheCli
     DESC
     scope_option(c)
     act(c) do |tag = nil, scope: nil|
-      pp cache.blobs(tag: tag, scope: scope).map(&:to_h)
+      table_data = {
+        'ID' => proc { |b| b.id },
+        'Filename' => proc { |b| b.filename },
+        'Size' => proc { |b| b.size },
+        'Scope' => proc { |b| b.scope }
+      }
+      table = TTY::Table.new header: table_data.keys
+      cache.blobs(tag: tag, scope: scope).each do |blob|
+        table << table_data.values.map { |p| p.call(blob) }
+      end
+      puts table.render(:ascii)
     end
   end
 
