@@ -68,6 +68,12 @@ class FlightCacheCli
     FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
   end
 
+  def self.render_table(enum, table_data)
+    table = TTY::Table.new header: table_data.keys
+    enum.each { |e| table << table_data.values.map { |v| v.call(e) } }
+    table.render(:ascii)
+  end
+
   command :'list' do |c|
     c.syntax = 'list [TAG]'
     c.summary = 'Retrieve and filter the files'
@@ -81,25 +87,28 @@ class FlightCacheCli
       ownership scope
     DESC
     scope_option(c)
-    act(c) do |tag = nil, scope: nil|
-      table_data = {
+    act(c) do |tag = nil, opts|
+      puts render_table(
+        cache.blobs(tag: tag, scope: opts[:scope]),
         'ID' => proc { |b| b.id },
         'Filename' => proc { |b| b.filename },
         'Size' => proc { |b| b.size },
         'Scope' => proc { |b| b.scope }
-      }
-      table = TTY::Table.new header: table_data.keys
-      cache.blobs(tag: tag, scope: scope).each do |blob|
-        table << table_data.values.map { |p| p.call(blob) }
-      end
-      puts table.render(:ascii)
+      )
     end
   end
 
   command :'list-tags' do |c|
     c.syntax = 'list-tags'
     c.description = 'Retrieve all the tags'
-    act(c) { pp cache.tags.map(&:to_h) }
+    act(c) do
+      puts render_table(
+        cache.tags,
+        'Name' => proc { |t| t.name },
+        'Max. Size' => proc { |t| t.max_size },
+        'Restricted' => proc { |t| t.restricted }
+      )
+    end
   end
 
   command :download do |c|
