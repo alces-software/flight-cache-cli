@@ -1,29 +1,31 @@
 # frozen_string_literal: true
 
+#==============================================================================
+# Copyright (C) 2019-present Alces Flight Ltd.
 #
-# =============================================================================
-# Copyright (C) 2019 Stephen F. Norledge and Alces Flight Ltd
+# This file is part of flight-cache-cli.
 #
-# This file is part of Flight Cache
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which is available at
+# <https://www.eclipse.org/legal/epl-2.0>, or alternative license
+# terms made available by Alces Flight Ltd - please direct inquiries
+# about licensing to licensing@alces-flight.com.
 #
-# Flight Cache is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
+# This project is distributed in the hope that it will be useful, but
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
+# OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+# PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more
+# details.
 #
-# Flight Cache is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
+# You should have received a copy of the Eclipse Public License 2.0
+# along with this project. If not, see:
 #
-# You should have received a copy of the GNU Affero General Public License
-# along with Flight Cache.  If not, see <http://www.gnu.org/licenses/>.
+#  https://opensource.org/licenses/EPL-2.0
 #
-# For more information on the Flight Cache, please visit:
-# https://github.com/alces-software/flight-cache
+# For more information on flight-cache-cli, please visit:
 # https://github.com/alces-software/flight-cache-cli
-# ==============================================================================
-#
+#===============================================================================
 
 require 'commander'
 
@@ -32,6 +34,9 @@ require 'pp'
 
 require 'flight_cache_cli/config'
 require 'flight_cache_cli/account_config'
+
+require 'tty-table'
+require 'filesize'
 
 class FlightCacheCli
   extend Commander::UI
@@ -64,43 +69,56 @@ class FlightCacheCli
     FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
   end
 
-  command :list do |c|
-    c.syntax = 'list'
-    c.description = 'Retrieve and filter multiple blobs or tags'
-    c.sub_command_group = true
+  def self.render_table(enum, table_data)
+    table = TTY::Table.new header: table_data.keys
+    enum.each { |e| table << table_data.values.map { |v| v.call(e) } }
+    table.render(:ascii)
   end
 
-  command :'list blobs' do |c|
-    c.syntax = 'list blobs [TAG]'
-    c.summary = 'Retrieve and filter the blobs'
+  command :'list' do |c|
+    c.syntax = 'list [TAG]'
+    c.summary = 'Retrieve and filter the files'
     c.description = <<~DESC.chomp
-      By default this will return all the blobs you have access to. This
-      includes blobs in the user, group, and public ownership scopes of
+      By default this will return all the files you have access to. This
+      includes files in the user, group, and public ownership scopes of
       any tag.
 
-      The TAG optional argument can be used to filter the blobs further by
+      The TAG optional argument can be used to filter the files further by
       their tag. The `--scope` option will limit the resaults to a specific
       ownership scope
     DESC
-    c.hidden = true
     scope_option(c)
-    act(c) do |tag = nil, scope: nil|
-      pp cache.blobs(tag: tag, scope: scope).map(&:to_h)
+    act(c) do |tag = nil, opts|
+      puts render_table(
+        cache.blobs(tag: tag, scope: opts[:scope]),
+        'ID' => proc { |b| b.id },
+        'Filename' => proc { |b| b.filename },
+        'Size' => proc { |b| Filesize.new(b.size).pretty },
+        'Scope' => proc do |b|
+          b.scope + (b.protected ? ' 🔒 ' : '')
+        end
+      )
     end
   end
 
-  command :'list tags' do |c|
-    c.syntax = 'list tags'
+  command :'list-tags' do |c|
+    c.syntax = 'list-tags'
     c.description = 'Retrieve all the tags'
-    c.hidden = true
-    act(c) { pp cache.tags.map(&:to_h) }
+    act(c) do
+      puts render_table(
+        cache.tags,
+        'Name' => proc { |t| t.name },
+        'Max. Size' => proc { |t| Filesize.new(t.max_size).pretty },
+        'Restricted' => proc { |t| t.restricted ? '✓' : '-' }
+      )
+    end
   end
 
   command :download do |c|
     c.syntax = 'download ID [FILEPATH]'
-    c.summary = 'Download the blob by id'
+    c.summary = 'Download the file by id'
     c.description = <<~DESC.chomp
-      Downloads the given blob by its id. The file will be saved to the
+      Downloads the given file by its id. The file will be saved to the
       path given by FILEPATH. This can either be an absolute or relative to
       the current working directory.
 
@@ -130,24 +148,17 @@ class FlightCacheCli
     end
   end
 
-  command :get do |c|
-    c.syntax = 'get ID'
-    c.description = 'Get the metadata about a particular blob'
-    act(c) do |id|
-      pp cache.blob(id).to_h
-    end
-  end
-
   command :delete do |c|
     c.syntax = 'delete ID'
-    c.summary = 'Destroys the given blob and returns it metadata'
+    c.summary = 'Destroys the given file and returns it metadata'
     act(c) do |id|
-      pp cache.delete(id).to_h
+      blob = cache.delete(id)
+      puts "File '#{blob.filename}' has been deleted"
     end
   end
 
   command :upload do |c|
-    c.syntax = 'upload TAG FILENAME FILEPATH'
+    c.syntax = 'upload TAG FILEPATH [FILENAME]'
     c.summary = 'Upload the file to the TAG'
     c.description = <<~DESC.chomp
       Uploads the file to the given tag. The FILENAME is used as a label on
@@ -155,9 +166,11 @@ class FlightCacheCli
       uploaded from stdin by setting FILEPATH to '-' (without quotes).
     DESC
     scope_option(c)
-    act(c) do |tag, name, filepath, scope: nil|
+    act(c) do |tag, filepath, name = nil, opts|
+      name ||= File.basename(filepath)
       io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
-      pp cache.upload(name, io, tag: tag, scope: scope).to_h
+      blob = cache.upload(name, io, tag: tag, scope: opts[:scope])
+      puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
     end
   end
 end
