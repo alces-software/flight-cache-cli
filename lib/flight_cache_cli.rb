@@ -94,7 +94,9 @@ class FlightCacheCli
         'ID' => proc { |b| b.id },
         'Filename' => proc { |b| b.filename },
         'Size' => proc { |b| Filesize.new(b.size).pretty },
-        'Scope' => proc { |b| b.scope }
+        'Scope' => proc do |b|
+          b.scope + (b.protected ? ' 🔒 ' : '')
+        end
       )
     end
   end
@@ -107,7 +109,7 @@ class FlightCacheCli
         cache.tags,
         'Name' => proc { |t| t.name },
         'Max. Size' => proc { |t| Filesize.new(t.max_size).pretty },
-        'Restricted' => proc { |t| t.restricted }
+        'Restricted' => proc { |t| t.restricted ? '✓' : '-' }
       )
     end
   end
