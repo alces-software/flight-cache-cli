@@ -94,7 +94,8 @@ class FlightCacheCli
     scope_option(c)
     act(c) do |tag = nil, opts|
       puts render_table(
-        cache.blobs(tag: tag, scope: opts[:scope]),
+        cache.blobs(tag: tag, scope: opts[:scope])
+             .sort_by { |b| b.id.to_i },
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
         'Tag' => proc { |b| b.tag_name },
@@ -114,7 +115,7 @@ class FlightCacheCli
     c.description = 'Retrieve all the tags'
     act(c) do
       puts render_table(
-        cache.tags,
+        cache.tags.sort_by { |t| t.name },
         'Name' => proc { |t| t.name },
         'Max. Size' => proc do |t|
           { value: Filesize.new(t.max_size).pretty, alignment: :right }
