@@ -39,12 +39,16 @@ require 'tty-table'
 require 'filesize'
 
 class FlightCacheCli
+  # Unicode messes with ruby syntax highlighting, thus it is easier to have
+  # it as a constant instead
+  LOCK_SUFFIX = ' 🔒'
+
   extend Commander::UI
   extend Commander::UI::AskForClass
   extend Commander::Delegates
 
   program :name,        'flight-cache'
-  program :version,     '0.5.1'
+  program :version,     '0.6.0'
   program :description, 'Manages the flight file cache'
   program :help_paging, false
 
@@ -70,9 +74,14 @@ class FlightCacheCli
   end
 
   def self.render_table(enum, table_data)
+    return 'Nothing to display' if enum.empty?
     table = TTY::Table.new header: table_data.keys
     enum.each { |e| table << table_data.values.map { |v| v.call(e) } }
-    table.render(:ascii)
+    table.render(:ascii, padding: [0, 1])
+  end
+
+  def self.pretty_bytes(num_byte)
+    Filesize.new(num_byte).pretty(precision: 0)
   end
 
   command :'list' do |c|
@@ -90,14 +99,19 @@ class FlightCacheCli
     scope_option(c)
     act(c) do |tag = nil, opts|
       puts render_table(
-        cache.blobs(tag: tag, scope: opts[:scope]),
-        'ID' => proc { |b| b.id },
+        cache.blobs(tag: tag, scope: opts[:scope])
+             .sort_by { |b| b.id.to_i },
+        'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
-        'Size' => proc { |b| Filesize.new(b.size).pretty },
+        'Tag' => proc { |b| b.tag_name },
+        'Size' => proc do |b|
+          { value: pretty_bytes(b.size), alignment: :right }
+        end,
         'Scope' => proc do |b|
-          b.scope + (b.protected ? ' 🔒 ' : '')
+          b.scope + (b.protected ? LOCK_SUFFIX : '')
         end
-      )
+      # Hack the unicode alignment b/c I can't work out how to fix it correctly
+      ).gsub(LOCK_SUFFIX, "#{LOCK_SUFFIX} ")
     end
   end
 
@@ -106,10 +120,14 @@ class FlightCacheCli
     c.description = 'Retrieve all the tags'
     act(c) do
       puts render_table(
-        cache.tags,
+        cache.tags.sort_by { |t| t.name },
         'Name' => proc { |t| t.name },
-        'Max. Size' => proc { |t| Filesize.new(t.max_size).pretty },
-        'Restricted' => proc { |t| t.restricted ? '✓' : '-' }
+        'Max. Size' => proc do |t|
+          { value: pretty_bytes(t.max_size), alignment: :right }
+        end,
+        'Restricted' => proc do |t|
+          { value: t.restricted ? '✓' : '-', alignment: :center }
+        end
       )
     end
   end
