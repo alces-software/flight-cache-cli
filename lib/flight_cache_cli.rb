@@ -39,6 +39,10 @@ require 'tty-table'
 require 'filesize'
 
 class FlightCacheCli
+  # Unicode messes with ruby syntax highlighting, thus it is easier to have
+  # it as a constant instead
+  LOCK_SUFFIX = ' 🔒'
+
   extend Commander::UI
   extend Commander::UI::AskForClass
   extend Commander::Delegates
@@ -72,7 +76,7 @@ class FlightCacheCli
   def self.render_table(enum, table_data)
     table = TTY::Table.new header: table_data.keys
     enum.each { |e| table << table_data.values.map { |v| v.call(e) } }
-    table.render(:ascii)
+    table.render(:ascii, padding: [0, 1])
   end
 
   command :'list' do |c|
@@ -95,9 +99,10 @@ class FlightCacheCli
         'Filename' => proc { |b| b.filename },
         'Size' => proc { |b| Filesize.new(b.size).pretty },
         'Scope' => proc do |b|
-          b.scope + (b.protected ? ' 🔒 ' : '')
+          b.scope + (b.protected ? LOCK_SUFFIX : '')
         end
-      )
+      # Hack the unicode alignment b/c I can't work out how to fix it correctly
+      ).gsub(LOCK_SUFFIX, "#{LOCK_SUFFIX} ")
     end
   end
 
