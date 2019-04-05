@@ -74,6 +74,7 @@ class FlightCacheCli
   end
 
   def self.render_table(enum, table_data)
+    return 'Nothing to display' if enum.empty?
     table = TTY::Table.new header: table_data.keys
     enum.each { |e| table << table_data.values.map { |v| v.call(e) } }
     table.render(:ascii, padding: [0, 1])
