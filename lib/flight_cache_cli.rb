@@ -95,9 +95,11 @@ class FlightCacheCli
     act(c) do |tag = nil, opts|
       puts render_table(
         cache.blobs(tag: tag, scope: opts[:scope]),
-        'ID' => proc { |b| b.id },
+        'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
-        'Size' => proc { |b| Filesize.new(b.size).pretty },
+        'Size' => proc do |b|
+          { value: Filesize.new(b.size).pretty, alignment: :right }
+        end,
         'Scope' => proc do |b|
           b.scope + (b.protected ? LOCK_SUFFIX : '')
         end
@@ -113,8 +115,12 @@ class FlightCacheCli
       puts render_table(
         cache.tags,
         'Name' => proc { |t| t.name },
-        'Max. Size' => proc { |t| Filesize.new(t.max_size).pretty },
-        'Restricted' => proc { |t| t.restricted ? '✓' : '-' }
+        'Max. Size' => proc do |t|
+          { value: Filesize.new(t.max_size).pretty, alignment: :right }
+        end,
+        'Restricted' => proc do |t|
+          { value: t.restricted ? '✓' : '-', alignment: :center }
+        end
       )
     end
   end
