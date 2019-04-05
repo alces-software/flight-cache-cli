@@ -80,6 +80,10 @@ class FlightCacheCli
     table.render(:ascii, padding: [0, 1])
   end
 
+  def self.pretty_bytes(num_byte)
+    Filesize.new(num_byte).pretty(precision: 0)
+  end
+
   command :'list' do |c|
     c.syntax = 'list [TAG]'
     c.summary = 'Retrieve and filter the files'
@@ -101,7 +105,7 @@ class FlightCacheCli
         'Filename' => proc { |b| b.filename },
         'Tag' => proc { |b| b.tag_name },
         'Size' => proc do |b|
-          { value: Filesize.new(b.size).pretty, alignment: :right }
+          { value: pretty_bytes(b.size), alignment: :right }
         end,
         'Scope' => proc do |b|
           b.scope + (b.protected ? LOCK_SUFFIX : '')
@@ -119,7 +123,7 @@ class FlightCacheCli
         cache.tags.sort_by { |t| t.name },
         'Name' => proc { |t| t.name },
         'Max. Size' => proc do |t|
-          { value: Filesize.new(t.max_size).pretty, alignment: :right }
+          { value: pretty_bytes(t.max_size), alignment: :right }
         end,
         'Restricted' => proc do |t|
           { value: t.restricted ? '✓' : '-', alignment: :center }
