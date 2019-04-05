@@ -97,6 +97,7 @@ class FlightCacheCli
         cache.blobs(tag: tag, scope: opts[:scope]),
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
+        'Tag' => proc { |b| b.tag_name },
         'Size' => proc do |b|
           { value: Filesize.new(b.size).pretty, alignment: :right }
         end,
