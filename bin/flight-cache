@@ -38,5 +38,7 @@ require 'bundler/setup'
 
 require 'flight_cache_cli'
 
+Dir.chdir(ENV.fetch('FLIGHT_CWD','.'))
+
 FlightCacheCli.run! if $PROGRAM_NAME == __FILE__
 

@@ -48,7 +48,7 @@ class FlightCacheCli
   extend Commander::Delegates
 
   program :name,        'flight-cache'
-  program :version,     '0.6.0'
+  program :version,     '0.6.1'
   program :description, 'Manages the flight file cache'
   program :help_paging, false
 
@@ -188,6 +188,10 @@ class FlightCacheCli
     scope_option(c)
     act(c) do |tag, filepath, name = nil, opts|
       name ||= File.basename(filepath)
+      raise <<~ERROR.gsub("\n", ' ').chomp if name == '-'
+        The file name must not be a hypen. Please provide the second FILENAME
+        argument if uploading from stdin
+      ERROR
       io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
       blob = cache.upload(name, io, tag: tag, scope: opts[:scope])
       puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
