@@ -73,6 +73,10 @@ class FlightCacheCli
     command.option '--label LABEL', 'Specify the file label'
   end
 
+  def self.admin_option(command)
+    command.option '--admin', 'Preform an admin request, if available'
+  end
+
   def self.cache
     FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
   end
@@ -107,13 +111,15 @@ class FlightCacheCli
     DESC
     scope_option(c)
     label_option(c)
+    admin_option(c)
     c.option '--wild', 'Preform a wildcard match on the label'
     act(c) do |tag = nil, opts|
       puts render_table(
         cache.client.blobs.list(tag: tag,
                                 scope: opts[:scope],
                                 label: opts[:label],
-                                wild: opts[:wild]
+                                wild: opts[:wild],
+                                admin: opts[:admin]
                                ).sort_by { |b| b.id.to_i },
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
