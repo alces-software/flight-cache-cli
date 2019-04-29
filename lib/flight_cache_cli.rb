@@ -69,12 +69,16 @@ class FlightCacheCli
     command.option '-s', '--scope SCOPE', 'Specify the tagged scope'
   end
 
-  def self.label_option(command)
-    command.option '--label LABEL', 'Specify the file label'
+  def self.admin_option(command)
+    command.option '--admin', 'Preform an admin request [ADMINS ONLY]'
   end
 
-  def self.admin_option(command)
-    command.option '--admin', 'Preform an admin request, if available'
+  def self.set_title_option(command)
+    command.option '--title TITLE', "Set the file's title"
+  end
+
+  def self.set_label_option(command)
+    command.option '--label LABEL', "Set the file's label"
   end
 
   def self.cache
@@ -110,8 +114,8 @@ class FlightCacheCli
       any labels that conform to the `<label>/*` format.
     DESC
     scope_option(c)
-    label_option(c)
     admin_option(c)
+    c.option '--label LABEL', 'Return the files with a matching label'
     c.option '--wild', 'Preform a wildcard match on the label'
     act(c) do |tag = nil, opts|
       puts render_table(
@@ -207,6 +211,9 @@ class FlightCacheCli
       uploaded from stdin by setting FILEPATH to '-' (without quotes).
     DESC
     scope_option(c)
+    admin_option(c)
+    set_title_option(c)
+    set_label_option(c)
     act(c) do |tag, filepath, name = nil, opts|
       name ||= File.basename(filepath)
       raise <<~ERROR.gsub("\n", ' ').chomp if name == '-'
@@ -214,7 +221,17 @@ class FlightCacheCli
         argument if uploading from stdin
       ERROR
       io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
-      blob = cache.upload(name, io, tag: tag, scope: opts[:scope])
+      blob = cache.client
+                  .blobs
+                  .upload(
+                    filename: name,
+                    io: io,
+                    tag: tag,
+                    scope: opts[:scope] || :user,
+                    admin: opts[:admin],
+                    label: opts[:label],
+                    title: opts[:title]
+                  )
       puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
     end
   end
