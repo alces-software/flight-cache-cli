@@ -35,6 +35,9 @@ require 'pp'
 require 'flight_cache_cli/config'
 require 'flight_cache_cli/account_config'
 
+require 'tempfile'
+
+require 'tty-editor'
 require 'tty-table'
 require 'filesize'
 
@@ -250,6 +253,13 @@ class FlightCacheCli
         hash[:title] = opts[:title] if opts.key?(:title)
       end
       blob = cache.client.blobs.update(id: id, **params)
+      io = blob.download
+      Tempfile.open(blob.filename) do |f|
+        f.write(io.read)
+        f.rewind
+        TTY::Editor.open(f.path)
+        blob = cache.client.blobs.update(id: blob.id, io: f)
+      end
       puts "File #{blob.filename} has been updated"
     end
   end
