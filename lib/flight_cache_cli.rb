@@ -104,6 +104,7 @@ class FlightCacheCli
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
         'Tag' => proc { |b| b.tag_name },
+        'Label' => proc { |b| b.label },
         'Size' => proc do |b|
           { value: pretty_bytes(b.size), alignment: :right }
         end,
