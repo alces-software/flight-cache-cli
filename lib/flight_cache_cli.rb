@@ -127,6 +127,7 @@ class FlightCacheCli
                                ).sort_by { |b| b.id.to_i },
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
+        'Title' => proc { |b| b.title },
         'Tag' => proc { |b| b.tag_name },
         'Label' => proc { |b| b.label },
         'Size' => proc do |b|
