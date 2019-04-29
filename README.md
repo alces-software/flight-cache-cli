@@ -22,6 +22,9 @@ export FLIGHT_AUTH_TOKEN=...  # Your flight authorization token
 export FLIGHT_CACHE_HOST=...  # The domain to the app e.g. 'localhost:3000'
 ```
 
+The host can be permanently set in the core config file. Please see the example
+config for details: `etc/config.yaml.example`
+
 ## Run
 
 The app can be ran by:
