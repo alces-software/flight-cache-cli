@@ -69,6 +69,10 @@ class FlightCacheCli
     command.option '-s', '--scope SCOPE', 'Specify the tagged scope'
   end
 
+  def self.label_option(command)
+    command.option '--label LABEL', 'Specify the file label'
+  end
+
   def self.cache
     FlightCache.new(Config.read.host, AccountConfig.read.auth_token)
   end
@@ -94,13 +98,23 @@ class FlightCacheCli
 
       The TAG optional argument can be used to filter the files further by
       their tag. The `--scope` option will limit the resaults to a specific
-      ownership scope
+      ownership scope.
+
+      The `--label` option will filter the files to those that exactly match
+      the label. This can be combined with the `--wild` flag to preform a
+      wildcard search. Wildcard searches will contain the exact matches and
+      any labels that conform to the `<label>/*` format.
     DESC
     scope_option(c)
+    label_option(c)
+    c.option '--wild', 'Preform a wildcard match on the label'
     act(c) do |tag = nil, opts|
       puts render_table(
-        cache.blobs(tag: tag, scope: opts[:scope])
-             .sort_by { |b| b.id.to_i },
+        cache.client.blobs.list(tag: tag,
+                                scope: opts[:scope],
+                                label: opts[:label],
+                                wild: opts[:wild]
+                               ).sort_by { |b| b.id.to_i },
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
         'Tag' => proc { |b| b.tag_name },
