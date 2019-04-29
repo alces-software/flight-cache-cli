@@ -236,5 +236,22 @@ class FlightCacheCli
       puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
     end
   end
+
+  command :edit do |c|
+    c.syntax = 'edit ID'
+    c.summary = "Update the file's metadata and content"
+    set_title_option(c)
+    set_label_option(c)
+    c.option '--filename FILENAME', "Set the file's filename"
+    act(c) do |id, opts|
+      params = {}.tap do |hash|
+        hash[:new_filename] = opts[:filename] if opts.key?(:filename)
+        hash[:label] = opts[:label] if opts.key?(:label)
+        hash[:title] = opts[:title] if opts.key?(:title)
+      end
+      blob = cache.client.blobs.update(id: id, **params)
+      puts "File #{blob.filename} has been updated"
+    end
+  end
 end
 
