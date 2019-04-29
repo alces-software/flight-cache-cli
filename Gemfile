@@ -38,6 +38,7 @@ gem 'flight_config', github: 'alces-software/flight_config'
 
 gem "filesize", "~> 0.2.0"
 gem 'tty-table'
+gem 'tty-editor'
 
 group :development do
   gem 'pry'

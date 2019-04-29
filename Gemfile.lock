@@ -7,9 +7,9 @@ GIT
 
 GIT
   remote: https://github.com/alces-software/flight_cache
-  revision: 713739aa71f8e58be1e441de89c06fa16c67de02
+  revision: 9ed135a08a170acf744a26d382e731bcce234901
   specs:
-    flight_cache (0.5.5)
+    flight_cache (0.6.3)
       activesupport
       faraday
       faraday_middleware
@@ -64,8 +64,23 @@ GEM
       unicode_utils (~> 1.4)
     strings-ansi (0.1.0)
     thread_safe (0.3.6)
+    timers (4.3.0)
     tty-color (0.4.3)
     tty-config (0.3.1)
+    tty-cursor (0.6.1)
+    tty-editor (0.5.0)
+      tty-prompt (~> 0.18)
+      tty-which (~> 0.4)
+    tty-prompt (0.18.1)
+      necromancer (~> 0.4.0)
+      pastel (~> 0.7.0)
+      timers (~> 4.0)
+      tty-cursor (~> 0.6.0)
+      tty-reader (~> 0.5.0)
+    tty-reader (0.5.0)
+      tty-cursor (~> 0.6.0)
+      tty-screen (~> 0.6.4)
+      wisper (~> 2.0.0)
     tty-screen (0.6.5)
     tty-table (0.10.0)
       equatable (~> 0.5.0)
@@ -73,10 +88,12 @@ GEM
       pastel (~> 0.7.2)
       strings (~> 0.1.0)
       tty-screen (~> 0.6.4)
+    tty-which (0.4.0)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
     unicode-display_width (1.5.0)
     unicode_utils (1.4.0)
+    wisper (2.0.0)
 
 PLATFORMS
   ruby
@@ -88,6 +105,7 @@ DEPENDENCIES
   flight_config!
   pry
   pry-byebug
+  tty-editor
   tty-table
 
 BUNDLED WITH

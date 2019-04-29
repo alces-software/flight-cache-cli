@@ -35,6 +35,9 @@ require 'pp'
 require 'flight_cache_cli/config'
 require 'flight_cache_cli/account_config'
 
+require 'tempfile'
+
+require 'tty-editor'
 require 'tty-table'
 require 'filesize'
 
@@ -48,7 +51,7 @@ class FlightCacheCli
   extend Commander::Delegates
 
   program :name,        'flight-cache'
-  program :version,     '0.6.1'
+  program :version,     '0.6.2'
   program :description, 'Manages the flight file cache'
   program :help_paging, false
 
@@ -67,6 +70,18 @@ class FlightCacheCli
 
   def self.scope_option(command)
     command.option '-s', '--scope SCOPE', 'Specify the tagged scope'
+  end
+
+  def self.admin_option(command)
+    command.option '--admin', 'Preform an admin request [ADMINS ONLY]'
+  end
+
+  def self.set_title_option(command)
+    command.option '--title TITLE', "Set the file's title"
+  end
+
+  def self.set_label_option(command)
+    command.option '--label LABEL', "Set the file's label"
   end
 
   def self.cache
@@ -94,16 +109,30 @@ class FlightCacheCli
 
       The TAG optional argument can be used to filter the files further by
       their tag. The `--scope` option will limit the resaults to a specific
-      ownership scope
+      ownership scope.
+
+      The `--label` option will filter the files to those that exactly match
+      the label. This can be combined with the `--wild` flag to preform a
+      wildcard search. Wildcard searches will contain the exact matches and
+      any labels that conform to the `<label>/*` format.
     DESC
     scope_option(c)
+    admin_option(c)
+    c.option '--label LABEL', 'Return the files with a matching label'
+    c.option '--wild', 'Preform a wildcard match on the label'
     act(c) do |tag = nil, opts|
       puts render_table(
-        cache.blobs(tag: tag, scope: opts[:scope])
-             .sort_by { |b| b.id.to_i },
+        cache.client.blobs.list(tag: tag,
+                                scope: opts[:scope],
+                                label: opts[:label],
+                                wild: opts[:wild],
+                                admin: opts[:admin]
+                               ).sort_by { |b| b.id.to_i },
         'ID' => proc { |b| { value: b.id, alignment: :right } },
         'Filename' => proc { |b| b.filename },
+        'Title' => proc { |b| b.title },
         'Tag' => proc { |b| b.tag_name },
+        'Label' => proc { |b| b.label },
         'Size' => proc do |b|
           { value: pretty_bytes(b.size), alignment: :right }
         end,
@@ -186,6 +215,9 @@ class FlightCacheCli
       uploaded from stdin by setting FILEPATH to '-' (without quotes).
     DESC
     scope_option(c)
+    admin_option(c)
+    set_title_option(c)
+    set_label_option(c)
     act(c) do |tag, filepath, name = nil, opts|
       name ||= File.basename(filepath)
       raise <<~ERROR.gsub("\n", ' ').chomp if name == '-'
@@ -193,8 +225,42 @@ class FlightCacheCli
         argument if uploading from stdin
       ERROR
       io = (filepath == '-' ? $stdin : File.open(filepath, 'r'))
-      blob = cache.upload(name, io, tag: tag, scope: opts[:scope])
+      blob = cache.client
+                  .blobs
+                  .upload(
+                    filename: name,
+                    io: io,
+                    tag: tag,
+                    scope: opts[:scope] || :user,
+                    admin: opts[:admin],
+                    label: opts[:label],
+                    title: opts[:title]
+                  )
       puts "File '#{blob.filename}' has been uploaded. Size: #{blob.size}B"
+    end
+  end
+
+  command :edit do |c|
+    c.syntax = 'edit ID'
+    c.summary = "Update the file's metadata and content"
+    set_title_option(c)
+    set_label_option(c)
+    c.option '--filename FILENAME', "Set the file's filename"
+    act(c) do |id, opts|
+      params = {}.tap do |hash|
+        hash[:new_filename] = opts[:filename] if opts.key?(:filename)
+        hash[:label] = opts[:label] if opts.key?(:label)
+        hash[:title] = opts[:title] if opts.key?(:title)
+      end
+      blob = cache.client.blobs.update(id: id, **params)
+      io = blob.download
+      Tempfile.open(blob.filename) do |f|
+        f.write(io.read)
+        f.rewind
+        TTY::Editor.open(f.path)
+        blob = cache.client.blobs.update(id: blob.id, io: f)
+      end
+      puts "File #{blob.filename} has been updated"
     end
   end
 end
